@@ -1,0 +1,52 @@
+{
+  "name": "insider-trades-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for the Insider Trades API — gives AI assistants real-time access to SEC Form 3, 4, and 5 insider transaction data.",
+  "type": "module",
+  "bin": {
+    "insider-trades-mcp": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "insider-trades-api": "^0.2.0",
+    "zod": "^3.23.0",
+    "zod-to-json-schema": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "insider-trading",
+    "sec",
+    "edgar",
+    "form-4",
+    "fintech",
+    "ai",
+    "claude",
+    "openai",
+    "cursor",
+    "financial-data"
+  ],
+  "homepage": "https://insidertrades.us",
+  "license": "Apache-2.0",
+  "author": "GoodTech LLC",
+  "publishConfig": {
+    "access": "public"
+  }
+}
