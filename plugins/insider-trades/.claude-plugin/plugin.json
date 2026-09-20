@@ -1,0 +1,11 @@
+{
+  "name": "insider-trades",
+  "displayName": "Insider Trades",
+  "version": "0.1.0",
+  "description": "SEC Form 3/4/5 insider transactions: search filings, and get totals or rankings over a date range.",
+  "author": { "name": "GoodTech LLC", "url": "https://insidertrades.us" },
+  "homepage": "https://www.insidertrades.us/docs",
+  "repository": "https://github.com/goodtech-llc/insider-trades-mcp",
+  "license": "MIT",
+  "keywords": ["sec", "insider-trading", "form-4", "stocks", "finance"]
+}

@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "insider-trades": {
+      "type": "http",
+      "url": "https://api.insidertrades.us/mcp",
+      "headers": {
+        "x-api-key": "${INSIDER_TRADES_API_KEY}"
+      }
+    }
+  }
+}

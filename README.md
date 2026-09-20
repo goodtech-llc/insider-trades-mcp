@@ -33,6 +33,35 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) o
 
 Restart Claude Desktop. You should see the insider-trades tools available in the tools panel.
 
+### Claude Code — one command
+
+Claude Code can install this as a plugin, which adds the server *and* a skill
+that tells Claude how the data behaves (paging, filters that only work on recent
+filings, and the dollar amounts that are known to be wrong):
+
+```shell
+/plugin marketplace add goodtech-llc/insider-trades-mcp
+/plugin install insider-trades@insider-trades
+```
+
+Export your key first, in your shell profile:
+
+```bash
+export INSIDER_TRADES_API_KEY=your-api-key-here
+```
+
+The plugin points at the hosted server at `https://api.insidertrades.us/mcp`, so
+there is nothing to install locally. If a tool call answers "This connector needs
+an Insider Trades API key", the variable did not reach it: check it is exported
+in the shell that started Claude Code.
+
+You can also add the hosted server directly, without the plugin or its skill:
+
+```shell
+claude mcp add --transport http insider-trades https://api.insidertrades.us/mcp \
+  --header "x-api-key: $INSIDER_TRADES_API_KEY"
+```
+
 ### Cursor / Windsurf / Other MCP Clients
 
 Add the same block under your tool's MCP server configuration. The format is identical across all MCP-compatible clients.
