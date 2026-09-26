@@ -44,6 +44,13 @@
     "financial-data"
   ],
   "homepage": "https://insidertrades.us",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/goodtech-llc/insider-trades-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/goodtech-llc/insider-trades-mcp/issues"
+  },
   "license": "Apache-2.0",
   "author": "GoodTech LLC",
   "publishConfig": {

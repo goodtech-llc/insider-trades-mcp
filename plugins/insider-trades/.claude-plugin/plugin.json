@@ -6,6 +6,6 @@
   "author": { "name": "GoodTech LLC", "url": "https://insidertrades.us" },
   "homepage": "https://www.insidertrades.us/docs",
   "repository": "https://github.com/goodtech-llc/insider-trades-mcp",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "keywords": ["sec", "insider-trading", "form-4", "stocks", "finance"]
 }
