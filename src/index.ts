@@ -1,158 +1,180 @@
+/**
+ * insider-trades-mcp — a local (stdio) bridge to the hosted Insider Trades MCP server.
+ *
+ * Up to 0.1.x this package carried its own copy of the tools: its own schema,
+ * its own call to the API and its own output, which was the raw filings — about
+ * a megabyte for one active company's first page. The hosted server at
+ * https://api.insidertrades.us/mcp then gained an analytics tool, compact
+ * results, paging hints and warnings about the data's known defects, and this
+ * copy had none of them. Two implementations of one thing drift.
+ *
+ * So this is now a bridge: it speaks stdio to the local client (Claude
+ * Desktop, Cursor, anything that launches `npx insider-trades-mcp`) and
+ * forwards every request to the hosted server. Tools, descriptions and
+ * instructions all come from there, so npm users get every improvement the
+ * moment it ships, with no new release.
+ *
+ * The API key is read from INSIDER_TRADES_API_KEY, as before, and sent as the
+ * `x-api-key` header — so usage counts against the caller's plan exactly as a
+ * direct API call does.
+ */
+
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
+  McpError,
+  type CallToolResult,
 } from "@modelcontextprotocol/sdk/types.js";
-import { InsiderTradesAPI } from "insider-trades-api";
-import { z } from "zod";
-import { zodToJsonSchema } from "zod-to-json-schema";
 
-// ---------------------------------------------------------------------------
-// Input schema
-// ---------------------------------------------------------------------------
+const VERSION = "0.2.0";
+const UPSTREAM_URL = process.env.INSIDER_TRADES_MCP_URL ?? "https://api.insidertrades.us/mcp";
+const API_KEY = (process.env.INSIDER_TRADES_API_KEY ?? "").trim();
+// Long enough for a paged search on a cold start upstream, short enough that a
+// dead network reads as an error rather than a hang.
+const UPSTREAM_TIMEOUT_MS = 30_000;
 
-const SearchInsiderTransactionsSchema = z.object({
-  filingId: z.string().optional().describe(
-    "Direct lookup by filing ID. Returns a single filing if found.",
-  ),
-  issuerTicker: z.string().optional().describe(
-    'Filter by company ticker symbol, e.g. "AAPL", "MSFT", "TSLA".',
-  ),
-  issuerCik: z.string().optional().describe(
-    "Filter by issuer CIK (numeric string). Use instead of ticker when you have the CIK.",
-  ),
-  reportingOwnerCik: z.string().optional().describe(
-    "Filter by reporting owner (insider) CIK.",
-  ),
-  accessionNumber: z.string().optional().describe(
-    'Filter by SEC accession number, e.g. "0001140361-26-023363".',
-  ),
-  formTypes: z.union([z.string(), z.array(z.string())]).optional().describe(
-    '"3" = initial ownership statement, "4" = changes in ownership, "5" = annual statement. Defaults to all three.',
-  ),
-  transactionTypes: z
-    .union([z.string(), z.array(z.string())])
-    .optional()
-    .describe(
-      'Filter by transaction type(s). Values: "purchase", "sale", "grant", "gift", "exercise", "derivativeExercise", "disposition", "discretionary", "derivativeConversion", "derivativeExpiration", "smallAcquisition", "inheritance", "equitySwap", "tender", "other".',
-    ),
-  ownerRoles: z
-    .union([z.string(), z.array(z.string())])
-    .optional()
-    .describe(
-      'Filter by insider role(s). Values: "director", "officer", "tenPercentOwner".',
-    ),
-  officerTitles: z
-    .union([z.string(), z.array(z.string())])
-    .optional()
-    .describe(
-      'Filter by normalized officer title(s), e.g. "CEO", "CFO", "COO", "President", "General Counsel".',
-    ),
-  filingDateInEstStartDate: z.string().optional().describe(
-    "Filing date range start (YYYY-MM-DD, Eastern Time). Filters by the date the form was filed with the SEC.",
-  ),
-  filingDateInEstEndDate: z.string().optional().describe(
-    "Filing date range end (YYYY-MM-DD, Eastern Time).",
-  ),
-  periodOfReportStartDate: z.string().optional().describe(
-    "Period-of-report range start (YYYY-MM-DD). Filters by the date the transaction actually occurred, not the filing date.",
-  ),
-  periodOfReportEndDate: z.string().optional().describe(
-    "Period-of-report range end (YYYY-MM-DD).",
-  ),
-  minTotalAmount: z.number().optional().describe(
-    "Minimum total transaction dollar amount. Use to filter for significant trades.",
-  ),
-  maxTotalAmount: z.number().optional().describe(
-    "Maximum total transaction dollar amount.",
-  ),
-  fieldset: z.enum(["minimal", "standard", "full"]).optional().describe(
-    '"minimal": ID, issuer, owner, key amounts, dates. "standard": all aggregates + boolean flags + links + AI summary (recommended for most use cases). "full": standard + raw transaction arrays and holdings detail. Default: all stored fields.',
-  ),
-  limit: z
-    .number()
-    .int()
-    .min(1)
-    .max(750)
-    .optional()
-    .describe(
-      "Results per page (default 100, max 750). Use a large value when iterating many pages to minimize request count.",
-    ),
-  cursor: z.string().optional().describe(
-    "Opaque pagination cursor. Pass the nextCursor value from a previous response (with identical filters) to fetch the next page.",
-  ),
-});
+// Shown only if the hosted server cannot be reached at startup; normally its
+// own instructions are passed through verbatim.
+const FALLBACK_INSTRUCTIONS =
+  "SEC Form 3/4/5 insider transactions. Results are paged: when a result says " +
+  "hasMore, pass nextCursor back with the same filters. Rows flagged amountSuspect " +
+  "have a known-bad dollar value; quote their share counts instead. This is filing " +
+  "data, not investment advice.";
 
-// ---------------------------------------------------------------------------
-// Server
-// ---------------------------------------------------------------------------
+// ── Upstream connection ──────────────────────────────────────────────────────
 
-const server = new Server(
-  { name: "insider-trades-mcp", version: "0.1.0" },
-  { capabilities: { tools: {} } },
-);
+let upstream: Client | null = null;
+let connecting: Promise<Client> | null = null;
 
-let client: InsiderTradesAPI | null = null;
-
-function getClient(): InsiderTradesAPI {
-  if (!client) {
-    client = new InsiderTradesAPI();
-  }
+async function connectUpstream(): Promise<Client> {
+  const client = new Client({ name: "insider-trades-mcp", version: VERSION });
+  const transport = new StreamableHTTPClientTransport(new URL(UPSTREAM_URL), {
+    requestInit: { headers: API_KEY ? { "x-api-key": API_KEY } : {} },
+  });
+  await client.connect(transport, { timeout: UPSTREAM_TIMEOUT_MS });
   return client;
 }
 
-// ---------------------------------------------------------------------------
-// Tool list
-// ---------------------------------------------------------------------------
+/** One shared connection, opened on first use and reopened after a failure. */
+function getUpstream(): Promise<Client> {
+  if (upstream) return Promise.resolve(upstream);
+  connecting ??= connectUpstream()
+    .then((client) => (upstream = client))
+    .finally(() => {
+      connecting = null;
+    });
+  return connecting;
+}
 
-server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools: [
-    {
-      name: "search_insider_transactions",
-      description:
-        "Search and filter SEC insider transactions from Form 3, 4, and 5 filings. " +
-        "Use this to find insider buying/selling activity for a company (by ticker or CIK), " +
-        "a specific insider (by CIK), filing date ranges, transaction types (purchases, sales, grants), " +
-        "insider roles (director, officer, 10% owner), officer titles (CEO, CFO, etc.), and dollar amount thresholds. " +
-        "Each result includes issuer info, insider info, dollar and share aggregates, boolean transaction flags, " +
-        "10b5-1 plan indicator, late-filing flag, and an AI-generated plain-English summary. " +
-        "When the response hasMore is true, call again with the nextCursor value to retrieve the next page.",
-      inputSchema: zodToJsonSchema(SearchInsiderTransactionsSchema, {
-        $refStrategy: "none",
-      }),
-    },
-  ],
-}));
+function dropUpstream(): void {
+  const stale = upstream;
+  upstream = null;
+  void stale?.close().catch(() => undefined);
+}
 
-// ---------------------------------------------------------------------------
-// Tool handler
-// ---------------------------------------------------------------------------
+/**
+ * Run a request against the hosted server, reconnecting once if it fails.
+ * The server keeps no session state, so a fresh connection loses nothing —
+ * and a laptop that slept or changed networks is the common cause of a
+ * failure here.
+ */
+async function withUpstream<T>(run: (client: Client) => Promise<T>): Promise<T> {
+  try {
+    return await run(await getUpstream());
+  } catch (err) {
+    // The server answered, and the answer was no (an unknown tool, bad
+    // arguments). Retrying would get the same answer; reporting it as
+    // "unreachable" would be false.
+    if (err instanceof McpError) throw err;
+    dropUpstream();
+    return run(await getUpstream());
+  }
+}
 
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  if (request.params.name !== "search_insider_transactions") {
-    throw new Error(`Unknown tool: ${request.params.name}`);
+/**
+ * The hosted server's refusal, re-thrown for our own client.
+ *
+ * Not as an McpError: its constructor prefixes the message with
+ * "MCP error <code>: ", and the client receiving it adds that prefix again, so
+ * a pass-through arrived as "MCP error -32602: MCP error -32602: Unknown tool".
+ * The protocol layer sends `message`, `code` and `data` from whatever is
+ * thrown, so a plain Error carrying the bare message and the original code
+ * reaches the client exactly as the hosted server said it.
+ */
+function passThrough(err: McpError): Error {
+  const message = err.message.replace(/^(MCP error -?\d+: )+/, "");
+  return Object.assign(new Error(message), { code: err.code, data: err.data });
+}
+
+function unreachable(err: unknown): string {
+  const detail = err instanceof Error ? err.message : String(err);
+  return (
+    `Could not reach the Insider Trades server at ${UPSTREAM_URL} (${detail}). ` +
+    "Check the network connection and try again."
+  );
+}
+
+// ── Local server ─────────────────────────────────────────────────────────────
+
+async function main(): Promise<void> {
+  // Take the hosted server's instructions if it answers now; start anyway if it
+  // does not, so the client still sees a server rather than a failed launch.
+  let instructions = FALLBACK_INSTRUCTIONS;
+  try {
+    instructions = (await getUpstream()).getInstructions() ?? FALLBACK_INSTRUCTIONS;
+  } catch (err) {
+    process.stderr.write(`insider-trades-mcp: ${unreachable(err)}\n`);
   }
 
-  const params = SearchInsiderTransactionsSchema.parse(
-    request.params.arguments ?? {},
+  const server = new Server(
+    { name: "insider-trades-mcp", version: VERSION },
+    { capabilities: { tools: {} }, instructions },
   );
 
-  const result = await getClient().getInsiderTransactions(params);
+  server.setRequestHandler(ListToolsRequestSchema, async (request) => {
+    try {
+      return await withUpstream((client) => client.listTools(request.params, { timeout: UPSTREAM_TIMEOUT_MS }));
+    } catch (err) {
+      throw err instanceof McpError ? passThrough(err) : err;
+    }
+  });
 
-  return {
-    content: [
-      {
-        type: "text",
-        text: JSON.stringify(result, null, 2),
-      },
-    ],
-  };
-});
+  server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToolResult> => {
+    // Answered here rather than forwarded: the hosted server would say to add
+    // an x-api-key header in the connector's settings, which is the fix for a
+    // remote connector and the wrong one for someone running this package.
+    if (!API_KEY) {
+      return {
+        content: [{
+          type: "text",
+          text: "No Insider Trades API key is set. Add INSIDER_TRADES_API_KEY to the \"env\" block of " +
+            "this server in your MCP config, then restart the app. Free keys: https://insidertrades.us",
+        }],
+        isError: true,
+      };
+    }
+    try {
+      return (await withUpstream((client) =>
+        client.callTool(
+          { name: request.params.name, arguments: request.params.arguments ?? {} },
+          undefined,
+          { timeout: UPSTREAM_TIMEOUT_MS },
+        ),
+      )) as CallToolResult;
+    } catch (err) {
+      // The hosted server's own refusal passes through, prefixed once.
+      if (err instanceof McpError) throw passThrough(err);
+      // A network failure becomes a tool result the assistant can read out,
+      // rather than a protocol error most clients show as "the server is broken".
+      return { content: [{ type: "text", text: unreachable(err) }], isError: true };
+    }
+  });
 
-// ---------------------------------------------------------------------------
-// Start
-// ---------------------------------------------------------------------------
+  await server.connect(new StdioServerTransport());
+}
 
-const transport = new StdioServerTransport();
-await server.connect(transport);
+await main();
