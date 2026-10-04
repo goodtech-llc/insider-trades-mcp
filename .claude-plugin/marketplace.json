@@ -4,6 +4,7 @@
     "name": "GoodTech LLC",
     "url": "https://insidertrades.us"
   },
+  "description": "Insider Trades: SEC Form 3/4/5 insider trading data for Claude Code, from insidertrades.us.",
   "plugins": [
     {
       "name": "insider-trades",
