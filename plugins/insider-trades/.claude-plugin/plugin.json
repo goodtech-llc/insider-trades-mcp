@@ -7,6 +7,7 @@
   "homepage": "https://www.insidertrades.us/docs",
   "repository": "https://github.com/goodtech-llc/insider-trades-mcp",
   "license": "Apache-2.0",
+  "privacyPolicyUrl": "https://www.insidertrades.us/privacy",
   "keywords": ["sec", "insider-trading", "form-4", "stocks", "finance"],
   "userConfig": {
     "api_key": {
