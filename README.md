@@ -41,14 +41,14 @@ filings, and the dollar amounts that are known to be wrong):
 
 ```shell
 /plugin marketplace add goodtech-llc/insider-trades-mcp
-/plugin install insider-trades@insider-trades
+/plugin install insider-trades@goodtech
 ```
 
 The install asks for your API key and keeps it in your system's secure
 credential store, not in a settings file. To change it later:
 
 ```shell
-/plugin configure insider-trades@insider-trades
+/plugin configure insider-trades@goodtech
 ```
 
 The plugin points at the hosted server at `https://api.insidertrades.us/mcp`, so

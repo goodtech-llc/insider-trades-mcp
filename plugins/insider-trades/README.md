@@ -22,7 +22,7 @@ and higher limits.
 
 Claude Code asks for the key when you install the plugin and keeps it in your
 system's secure credential store. To change it later, run
-`/plugin configure insider-trades@insider-trades`.
+`/plugin configure insider-trades@goodtech`.
 
 Requests go to the hosted server at `https://api.insidertrades.us/mcp` and count
 toward your API plan. Nothing runs locally.

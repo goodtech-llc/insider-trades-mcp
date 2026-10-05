@@ -1,10 +1,10 @@
 {
-  "name": "insider-trades",
+  "name": "goodtech",
   "owner": {
     "name": "GoodTech LLC",
     "url": "https://insidertrades.us"
   },
-  "description": "Insider Trades: SEC Form 3/4/5 insider trading data for Claude Code, from insidertrades.us.",
+  "description": "Claude Code plugins from GoodTech LLC, including Insider Trades: SEC Form 3/4/5 insider trading data from insidertrades.us.",
   "plugins": [
     {
       "name": "insider-trades",
