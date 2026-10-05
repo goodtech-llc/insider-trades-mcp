@@ -44,16 +44,17 @@ filings, and the dollar amounts that are known to be wrong):
 /plugin install insider-trades@insider-trades
 ```
 
-Export your key first, in your shell profile:
+The install asks for your API key and keeps it in your system's secure
+credential store, not in a settings file. To change it later:
 
-```bash
-export INSIDER_TRADES_API_KEY=your-api-key-here
+```shell
+/plugin configure insider-trades@insider-trades
 ```
 
 The plugin points at the hosted server at `https://api.insidertrades.us/mcp`, so
-there is nothing to install locally. If a tool call answers "This connector needs
-an Insider Trades API key", the variable did not reach it: check it is exported
-in the shell that started Claude Code.
+there is nothing to install locally. If a tool call says the key is missing or
+was rejected, run the command above and paste the key again in full, then start a
+new session.
 
 You can also add the hosted server directly, without the plugin or its skill:
 

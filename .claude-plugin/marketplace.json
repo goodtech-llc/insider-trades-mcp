@@ -10,7 +10,7 @@
       "name": "insider-trades",
       "source": "./plugins/insider-trades",
       "description": "SEC Form 3/4/5 insider trading data — who bought or sold shares in a public company, when, and how much.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "author": { "name": "GoodTech LLC", "url": "https://insidertrades.us" },
       "homepage": "https://www.insidertrades.us/docs",
       "repository": "https://github.com/goodtech-llc/insider-trades-mcp",

@@ -4,7 +4,7 @@
       "type": "http",
       "url": "https://api.insidertrades.us/mcp",
       "headers": {
-        "x-api-key": "${INSIDER_TRADES_API_KEY}"
+        "x-api-key": "${user_config.api_key}"
       }
     }
   }

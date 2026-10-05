@@ -1,11 +1,20 @@
 {
   "name": "insider-trades",
   "displayName": "Insider Trades",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "SEC Form 3/4/5 insider transactions: search filings, and get totals or rankings over a date range.",
   "author": { "name": "GoodTech LLC", "url": "https://insidertrades.us" },
   "homepage": "https://www.insidertrades.us/docs",
   "repository": "https://github.com/goodtech-llc/insider-trades-mcp",
   "license": "Apache-2.0",
-  "keywords": ["sec", "insider-trading", "form-4", "stocks", "finance"]
+  "keywords": ["sec", "insider-trading", "form-4", "stocks", "finance"],
+  "userConfig": {
+    "api_key": {
+      "type": "string",
+      "title": "Insider Trades API key",
+      "description": "From your dashboard at https://www.insidertrades.us/dashboard/api (free keys available). Stored in your system's secure credential store.",
+      "sensitive": true,
+      "required": true
+    }
+  }
 }
