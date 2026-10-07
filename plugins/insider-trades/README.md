@@ -21,8 +21,8 @@ You need an Insider Trades API key. Free keys are available from your
 and higher limits.
 
 Claude Code asks for the key when you install the plugin and keeps it in your
-system's secure credential store. To change it later, run
-`/plugin configure insider-trades@goodtech`.
+system's secure credential store. To change it later, run `/plugin`, open
+Insider Trades on the **Installed** tab and choose **Configure**.
 
 Requests go to the hosted server at `https://api.insidertrades.us/mcp` and count
 toward your API plan. Nothing runs locally.

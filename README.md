@@ -45,15 +45,12 @@ filings, and the dollar amounts that are known to be wrong):
 ```
 
 The install asks for your API key and keeps it in your system's secure
-credential store, not in a settings file. To change it later:
-
-```shell
-/plugin configure insider-trades@goodtech
-```
+credential store, not in a settings file. To change it later, run `/plugin`,
+open Insider Trades on the **Installed** tab and choose **Configure**.
 
 The plugin points at the hosted server at `https://api.insidertrades.us/mcp`, so
 there is nothing to install locally. If a tool call says the key is missing or
-was rejected, run the command above and paste the key again in full, then start a
+was rejected, do that and paste the key again in full, then start a
 new session.
 
 You can also add the hosted server directly, without the plugin or its skill:
