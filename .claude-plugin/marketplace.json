@@ -2,9 +2,9 @@
   "name": "goodtech",
   "owner": {
     "name": "GoodTech LLC",
-    "url": "https://insidertrades.us"
+    "url": "https://www.goodtechllc.com"
   },
-  "description": "Claude Code plugins from GoodTech LLC, including Insider Trades: SEC Form 3/4/5 insider trading data from insidertrades.us.",
+  "description": "Claude Code plugins from GoodTech LLC: Insider Trades (SEC Form 3/4/5 insider trading data from insidertrades.us) and SEC Daily (SEC EDGAR filings and SEC news from secdailyapi.com).",
   "plugins": [
     {
       "name": "insider-trades",
@@ -17,6 +17,22 @@
       "license": "Apache-2.0",
       "category": "data",
       "keywords": ["sec", "insider-trading", "form-4", "stocks", "finance"]
+    },
+    {
+      "name": "sec-daily",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/goodtech-llc/sec-daily-mcp.git",
+        "path": "plugins/sec-daily"
+      },
+      "description": "SEC EDGAR filings: search 10-K, 10-Q, 8-K and every other form, read a filing's text, look up companies, and follow SEC news.",
+      "version": "0.1.0",
+      "author": { "name": "GoodTech LLC", "url": "https://www.secdailyapi.com" },
+      "homepage": "https://www.secdailyapi.com/docs/examples/mcp",
+      "repository": "https://github.com/goodtech-llc/sec-daily-mcp",
+      "license": "Apache-2.0",
+      "category": "data",
+      "keywords": ["sec", "edgar", "filings", "10-k", "8-k", "stocks", "finance"]
     }
   ]
 }
