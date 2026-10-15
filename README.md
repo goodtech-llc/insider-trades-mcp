@@ -44,16 +44,17 @@ filings, and the dollar amounts that are known to be wrong):
 /plugin install insider-trades@goodtech
 ```
 
-The install asks for your API key and keeps it in your system's secure
-credential store, not in a settings file. To change it later, run `/plugin`,
-open Insider Trades on the **Installed** tab and choose **Configure**.
+There is no key to paste: the first time Claude uses a tool, it asks you to sign
+in to Insider Trades, and a free plan is set up automatically. If the sign-in
+window does not open by itself, run `/mcp`, choose the Insider Trades server and
+pick **Authenticate**. The same plugin works in Cowork and the Claude apps, where
+you connect it from the plugin's Connectors tab.
 
 The plugin points at the hosted server at `https://api.insidertrades.us/mcp`, so
-there is nothing to install locally. If a tool call says the key is missing or
-was rejected, do that and paste the key again in full, then start a
-new session.
+there is nothing to install locally.
 
-You can also add the hosted server directly, without the plugin or its skill:
+To use an API key instead of signing in, add the hosted server directly, without
+the plugin or its skill:
 
 ```shell
 claude mcp add --transport http insider-trades https://api.insidertrades.us/mcp \

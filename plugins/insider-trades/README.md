@@ -16,16 +16,27 @@ The plugin adds two tools and a skill:
 
 ## Setup
 
-You need an Insider Trades API key. Free keys are available from your
-[dashboard](https://www.insidertrades.us/dashboard/api); paid plans add history
-and higher limits.
+In Claude Code:
 
-Claude Code asks for the key when you install the plugin and keeps it in your
-system's secure credential store. To change it later, run `/plugin`, open
-Insider Trades on the **Installed** tab and choose **Configure**.
+```shell
+/plugin install insider-trades --marketplace goodtech-llc/insider-trades-mcp
+```
+
+Nothing to configure. The first time Claude uses a tool, it asks you to sign in
+to Insider Trades (the same account as the website and app; creating one takes a
+minute). A free plan is set up for you automatically: 1,000 requests a month
+and the last 12 months of filings. Pro raises that to 100,000 requests and full
+history; Claude tells you when you are getting close to the limit, with a link.
+
+In Claude Code, if the sign-in window does not open by itself, run `/mcp`,
+choose the Insider Trades server and pick **Authenticate**.
 
 Requests go to the hosted server at `https://api.insidertrades.us/mcp` and count
-toward your API plan. Nothing runs locally.
+toward your plan. Nothing runs locally.
+
+**Prefer an API key?** Add the server yourself instead of using the plugin:
+`claude mcp add --transport http insider-trades https://api.insidertrades.us/mcp --header "x-api-key: YOUR_KEY"`
+(keys at your [dashboard](https://www.insidertrades.us/dashboard/api)).
 
 ## Things to ask
 
@@ -36,8 +47,8 @@ toward your API plan. Nothing runs locally.
 
 ## Notes
 
-This is filing data, not investment advice. Free keys reach back one year; paid
-keys reach back further.
+This is filing data, not investment advice. The free plan reaches back one year;
+Pro reaches back further.
 
 Support: support@insidertrades.us · [Documentation](https://www.insidertrades.us/docs) ·
 License: Apache-2.0

@@ -2,10 +2,7 @@
   "mcpServers": {
     "insider-trades": {
       "type": "http",
-      "url": "https://api.insidertrades.us/mcp",
-      "headers": {
-        "x-api-key": "${user_config.api_key}"
-      }
+      "url": "https://api.insidertrades.us/mcp"
     }
   }
 }
