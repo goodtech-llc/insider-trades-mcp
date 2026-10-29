@@ -26,7 +26,7 @@
         "path": "plugins/sec-daily"
       },
       "description": "SEC EDGAR filings: search 10-K, 10-Q, 8-K and every other form, read a filing's text, look up companies, and follow SEC news.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "author": { "name": "GoodTech LLC", "url": "https://www.secdailyapi.com" },
       "homepage": "https://www.secdailyapi.com/docs/examples/mcp",
       "repository": "https://github.com/goodtech-llc/sec-daily-mcp",
